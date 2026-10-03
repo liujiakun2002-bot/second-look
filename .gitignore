@@ -1,0 +1,6 @@
+# private: never commit photos, paths, thumbnails or raw labels
+data/
+demo_photos/
+.venv/
+__pycache__/
+.DS_Store
