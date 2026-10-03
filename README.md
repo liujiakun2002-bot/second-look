@@ -13,8 +13,8 @@ a swipe page that writes every decision to a labels file. No foundation model is
 
 ```bash
 git clone <this repo> && cd second-look
-./run.sh                                  # synthetic demo library, no private photos needed
-./run.sh ~/Desktop/SecondLookPhotos       # your own exported folder
+bash run.sh                               # synthetic demo library, no private photos needed
+bash run.sh ~/Desktop/SecondLookPhotos    # your own exported folder
 ```
 
 `run.sh` creates a virtual environment, installs `requirements.txt`, runs the pipeline and opens
@@ -84,7 +84,7 @@ export OPENROUTER_API_KEY=sk-or-v1-...              # your own key
 
 ## Reproducing without private photos
 
-`./run.sh` with no folder builds a synthetic library (`scripts/make_demo_photos.py`), so every step —
+`bash run.sh` with no folder builds a synthetic library (`scripts/make_demo_photos.py`), so every step —
 pipeline, swipe page, blind labelling, `evaluate.py`, `vision_check.py --dry-run` — runs on any Mac.
 My own results are in `results/`; the photos and labels behind them are not published.
 
