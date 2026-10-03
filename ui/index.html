@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Second Look</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
@@ -108,61 +108,74 @@ let S = null, mode = 'ranked', page = 'start', cards = [], idx = 0, hist = [], k
 const freed = () => hist.reduce((s,h)=>s+h.freed,0);
 const seen = () => hist.reduce((s,h)=>s+h.seen,0);
 const $app = document.getElementById('app');
+// Reasons are written by pipeline.py in Chinese; show them in English.
+function en(r){ if(!r) return r; let m;
+  if (r.startsWith('和另一个文件完全相同')) return 'Exact copy of another file (same hash)';
+  if ((m=r.match(/^视频 ([\d.]+ [GM]B)(?:，拍摄于 (\d+) 年前)?/))) return `Video, ${m[1]}${m[2]?`, taken ${m[2]} years ago`:''}. The system can't see inside videos`;
+  if (r.startsWith('重复截图')) return 'Duplicate screenshot. A clearer copy exists';
+  if ((m=r.match(/^(\d+) 张相似照片之一/))) return `One of ${m[1]} similar photos. A sharper one exists`;
+  if ((m=r.match(/^(\d+) 张相似照片里最清晰/))) return `Sharpest of ${m[1]} similar photos`;
+  if (r.startsWith('画面几乎全黑')) return 'Almost completely dark. Probably an accident';
+  if (r.startsWith('有人脸但比较模糊')) return 'Has a face but blurry. Could be someone important';
+  if (r.startsWith('截图')) { m=r.match(/(\d+) 年前/); return `Screenshot${m?`, ${m[1]} years old`:''}. You decide if it's still useful`; }
+  if (r.startsWith('照片模糊')) return 'Blurry photo (low sharpness)';
+  if (r.startsWith('没有发现问题')) return 'No problems found';
+  return r; }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),1500); }
 
-// ─── 页面 1：开始 ───
+// ─── Page 1: start ───
 function vStart() {
-  const r = S.reclaim, rows = [['大视频', r.video, 'var(--sage)'], ['重复/相似照片', r.burst, 'var(--pill)'], ['截图', r.screenshot, 'var(--lime)'], ['模糊/误拍', r.photo, 'var(--pill)']].filter(x=>x[1]>0);
+  const r = S.reclaim, rows = [['Large videos', r.video, 'var(--sage)'], ['Duplicates & bursts', r.burst, 'var(--pill)'], ['Screenshots', r.screenshot, 'var(--lime)'], ['Blurry / accidental', r.photo, 'var(--pill)']].filter(x=>x[1]>0);
   const max = Math.max(1, ...rows.map(x=>x[1])), est = rows.reduce((s,x)=>s+x[1],0);
   return `
-  <div class="top"><div class="hello"><small>Second Look</small><b>存储快满了</b></div></div>
+  <div class="top"><div class="hello"><small>Second Look</small><b>Storage almost full</b></div></div>
   <div class="card">
-    <div class="card-h"><span>这个相册</span></div>
-    <div class="stat-big num">${S.count.toLocaleString()}<small>项</small></div>
-    <span class="chip">${S.photos} 张照片 · ${S.videos} 个视频 · 共 ${fmt(S.bytes)}</span>
+    <div class="card-h"><span>This library</span></div>
+    <div class="stat-big num">${S.count.toLocaleString()}<small> items</small></div>
+    <span class="chip">${S.photos} photos · ${S.videos} videos · ${fmt(S.bytes)} total</span>
   </div>
   <div class="card">
-    <div class="card-h"><span>空间可能从哪里腾出</span><span class="chip lime">≈ ${fmt(est)}</span></div>
+    <div class="card-h"><span>Where space could come from</span><span class="chip lime">≈ ${fmt(est)}</span></div>
     <div class="where">${rows.map(([k,b,c])=>`<div class="where-row"><div class="track"><div class="fill" style="width:${Math.max(38,b/max*100)}%;background:${c}">${k}</div></div><div class="v num">${fmt(b)}</div></div>`).join('')}</div>
   </div>
   <div class="promo">
-    <small>按「最值得删 × 最占空间」排好了</small>
-    <h3>先看最值得看的几张</h3>
-    <p>左滑移到最近删除，右滑保留，上滑不确定。不会自动删除任何照片。</p>
-    <button class="pill-btn white" data-a="start-ranked">开始整理</button>
+    <small>Ranked by likely-delete × file size</small>
+    <h3>See the ones worth checking first</h3>
+    <p>Swipe left to delete, right to keep, up if unsure. Nothing is deleted automatically.</p>
+    <button class="pill-btn white" data-a="start-ranked">Start</button>
   </div>
   <div class="promo light">
-    <small>评估用 · 标准答案 ${S.blind_done} / ${S.blind_total}</small>
-    <h3>盲标：随机照片，不看系统建议</h3>
-    <p>这些标签用来检验排序有没有漏掉该删的照片，所以这里不显示任何推荐。</p>
-    <button class="pill-btn" data-a="start-blind">${S.blind_done ? '继续盲标' : '开始盲标'}</button>
+    <small>For testing only · answer key ${S.blind_done} / ${S.blind_total}</small>
+    <h3>Test mode: random photos, no suggestions</h3>
+    <p>Not a user feature. These labels check whether the ranking missed anything, so no suggestions are shown here.</p>
+    <button class="pill-btn" data-a="start-blind">${S.blind_done ? 'Continue test mode' : 'Start test mode'}</button>
   </div>
-  <div class="foot">只在你的电脑上运行 · 滑动只记录标签，不删除文件</div>`;
+  <div class="foot">Runs only on your computer · swiping saves a label, it never deletes files</div>`;
 }
 
-// ─── 页面 2：滑动 ───
+// ─── Page 2: swipe ───
 const img = (id, w) => `/img/${id}?w=${w}`;
 function cardHTML(c, cls) {
   const blind = mode === 'blind';
-  const stamps = '<div class="stamp l">移到最近删除</div><div class="stamp r">保留</div><div class="stamp u">不确定</div>';
+  const stamps = '<div class="stamp l">Delete</div><div class="stamp r">Keep</div><div class="stamp u">Unsure</div>';
   if (c.card === 'burst') {
     const best = Math.max(0, c.items.findIndex(f=>f.best)), k = cls==='front' ? keepIdx : best;
     const fr = c.items.filter((_,i)=>i!==k).reduce((s,f)=>s+f.size,0);
     return `<div class="sw ${cls}">
-      <div class="info" style="padding-top:4px"><div style="display:flex;gap:6px"><span class="chip del">建议删除 ${c.items.length-1} 张</span><span class="chip num">${fmt(fr)}</span></div>
-      <div class="reason">${c.items.length} 张相似照片，★ 是最清晰的一张</div><div class="meta">${c.items[0].date}</div></div>
-      <div class="burst">${c.items.map((f,i)=>`<button class="bc ${i===k?'keep':''}" data-pick="${i}" aria-label="第 ${i+1} 张"><img src="${img(f.id,300)}" alt="" draggable="false"><span>${i===k?'保留':(i+1)}${i===best?' ★':''}</span></button>`).join('')}</div>
-      <div class="burst-note">点一张改成保留它 · 左滑：保留 1 张，其余移到最近删除 · 右滑：全部保留</div>${stamps}</div>`;
+      <div class="info" style="padding-top:4px"><div style="display:flex;gap:6px"><span class="chip del">Suggest deleting ${c.items.length-1}</span><span class="chip num">${fmt(fr)}</span></div>
+      <div class="reason">${c.items.length} similar photos · ★ is the sharpest</div><div class="meta">${c.items[0].date}</div></div>
+      <div class="burst">${c.items.map((f,i)=>`<button class="bc ${i===k?'keep':''}" data-pick="${i}" aria-label="Photo ${i+1}"><img src="${img(f.id,300)}" alt="" draggable="false"><span>${i===k?'Keep':(i+1)}${i===best?' ★':''}</span></button>`).join('')}</div>
+      <div class="burst-note">Tap a photo to keep it instead · Left: keep 1, delete the rest · Right: keep all</div>${stamps}</div>`;
   }
   const it = c.items[0];
-  const chip = blind ? '' : it.status==='delete' ? '<span class="chip del size">建议删除</span>' : it.status==='unsure' ? '<span class="chip lime size">不确定</span>' : '<span class="chip keep size">建议保留</span>';
-  const band = blind ? '<div class="blind-band">盲标模式 · 不显示系统建议，凭你自己的判断</div>'
-             : it.status==='unsure' ? '<div class="unsure-band"><b>不确定，请你看看</b>系统没有把握，这张不算推荐</div>' : '';
+  const chip = blind ? '' : it.status==='delete' ? '<span class="chip del size">Suggest delete</span>' : it.status==='unsure' ? '<span class="chip lime size">Not sure</span>' : '<span class="chip keep size">Suggest keep</span>';
+  const band = blind ? '<div class="blind-band">Test mode · no suggestions, use your own judgement</div>'
+             : it.status==='unsure' ? '<div class="unsure-band"><b>Not sure — please take a look</b>The system is not confident, so this is not a suggestion</div>' : '';
   return `<div class="sw ${cls}">${band}
     <div class="ph">${it.kind==='video' && cls==='front'
       ? `<video src="/video/${it.id}" poster="${img(it.id,700)}" controls playsinline preload="metadata"></video>`
       : `<img src="${img(it.id,700)}" alt="" draggable="false">`}${chip}<span class="chip dark top-r num">${fmt(it.size)}</span></div>
-    <div class="info">${blind ? '' : `<div class="reason">${esc(it.reason)}</div>`}<div class="meta">${it.date} · ${it.kind==='video'?'视频':'照片'}</div></div>${stamps}</div>`;
+    <div class="info">${blind ? '' : `<div class="reason">${esc(en(it.reason))}</div>`}<div class="meta">${it.date} · ${it.kind==='video'?'Video':'Photo'}</div></div>${stamps}</div>`;
 }
 
 function vSwipe() {
@@ -172,46 +185,46 @@ function vSwipe() {
   const recDel = mode==='ranked' && (c.card==='burst' || c.items[0].status==='delete');
   const segs = 20, done = Math.round(idx / cards.length * segs);
   const left = mode==='blind'
-    ? `<div class="card lime-card"><div class="k">盲标进度</div><div class="v num">${S.blind_done + seen()}<small> / ${S.blind_total}</small></div><div class="dots">${Array.from({length:segs},(_,i)=>`<i class="${i<done?'done':''}"></i>`).join('')}</div></div>`
-    : `<div class="card lime-card"><div class="k">已腾出</div><div class="v num">${gb(freed())}<small> GB</small></div><div class="dots">${Array.from({length:segs},(_,i)=>`<i class="${i<done?'done':''}"></i>`).join('')}</div></div>`;
+    ? `<div class="card lime-card"><div class="k">Test progress</div><div class="v num">${S.blind_done + seen()}<small> / ${S.blind_total}</small></div><div class="dots">${Array.from({length:segs},(_,i)=>`<i class="${i<done?'done':''}"></i>`).join('')}</div></div>`
+    : `<div class="card lime-card"><div class="k">Space freed</div><div class="v num">${gb(freed())}<small> GB</small></div><div class="dots">${Array.from({length:segs},(_,i)=>`<i class="${i<done?'done':''}"></i>`).join('')}</div></div>`;
   return `
   <div class="hud">${left}
-    <div class="card"><div class="k">已看</div><div class="v num">${seen()}<small> 张</small></div><div class="k num" style="margin-top:6px">第 ${idx+1} / ${cards.length} 组</div></div>
+    <div class="card"><div class="k">Seen</div><div class="v num">${seen()}<small> items</small></div><div class="k num" style="margin-top:6px">Card ${idx+1} / ${cards.length}</div></div>
   </div>
   <div class="stack" id="stack">${back}${cardHTML(c,'front')}</div>
   <div class="actions">
-    <button class="act del ${recDel?'rec':''}" data-a="left"><span class="o">${IC.x}</span>移到最近删除<small>← 左滑</small></button>
-    <button class="act uns" data-a="up"><span class="o">${IC.q}</span>不确定<small>↑ 上滑</small></button>
-    <button class="act keep" data-a="right"><span class="o">${IC.heart}</span>保留<small>右滑 →</small></button>
+    <button class="act del ${recDel?'rec':''}" data-a="left"><span class="o">${IC.x}</span>Delete<small>← swipe left</small></button>
+    <button class="act uns" data-a="up"><span class="o">${IC.q}</span>Unsure<small>↑ swipe up</small></button>
+    <button class="act keep" data-a="right"><span class="o">${IC.heart}</span>Keep<small>swipe right →</small></button>
   </div>
-  <div class="sub-actions"><button class="link" data-a="undo" ${hist.length?'':'disabled'}>↩ 撤销上一步</button><button class="link" data-a="finish">结束，看结果 →</button></div>`;
+  <div class="sub-actions"><button class="link" data-a="undo" ${hist.length?'':'disabled'}>↩ Undo</button><button class="link" data-a="finish">Finish & see results →</button></div>`;
 }
 
-// ─── 页面 3：结果 ───
+// ─── Page 3: results ───
 function vDone() {
   const s = seen(), d = hist.reduce((a,h)=>a+h.del,0);
   const uns = hist.filter(h=>h.act==='up').map(h=>cards[h.idx]).slice(0,8);
   const per = s ? freed()/s*50 : 0;
   return `
-  <div class="top"><div class="hello"><small>${mode==='blind'?'盲标暂停':'本次整理完成'}</small><b>${mode==='blind'?'标签已保存':'腾出了空间'}</b></div></div>
-  <div class="card"><div class="card-h"><span>${mode==='blind'?'标为删除的大小':'本次腾出'}</span><span class="chip lime num">${s} 张看完</span></div>
+  <div class="top"><div class="hello"><small>${mode==='blind'?'Test mode paused':'Session complete'}</small><b>${mode==='blind'?'Labels saved':'Space freed'}</b></div></div>
+  <div class="card"><div class="card-h"><span>${mode==='blind'?'Size labelled delete':'Freed this session'}</span><span class="chip lime num">${s} reviewed</span></div>
     <div class="rings"><i style="width:180px;height:180px"></i><i style="width:130px;height:130px"></i><i style="width:84px;height:84px;opacity:.8"></i>
       <b class="num">${gb(freed())}<small> GB</small></b></div></div>
   <div class="hud">
-    <div class="card"><div class="k">移到最近删除</div><div class="v num">${d}<small> 张</small></div></div>
-    <div class="card"><div class="k">每看 50 张</div><div class="v num">${gb(per)}<small> GB</small></div>${s<50?'<div class="k">看得还少，仅供参考</div>':''}</div>
+    <div class="card"><div class="k">Marked delete</div><div class="v num">${d}<small> items</small></div></div>
+    <div class="card"><div class="k">Per 50 swipes</div><div class="v num">${gb(per)}<small> GB</small></div>${s<50?'<div class="k">Small sample, rough estimate</div>':''}</div>
   </div>
-  ${uns.length ? `<div class="card"><div class="card-h" style="margin-bottom:10px"><span>你标了「不确定」的</span><span class="chip">${uns.length}</span></div>
-    <div style="display:flex;flex-direction:column;gap:8px">${uns.map(u=>`<div class="list-row"><img src="${img(u.items[0].id,120)}" alt=""><div><div>${esc(u.items[0].reason||'盲标照片')}</div><div class="meta">${u.items[0].date}</div></div></div>`).join('')}</div></div>` : ''}
-  <div class="promo"><small>放心</small><h3>没有任何文件被删除</h3><p>每一次滑动都只写进 data/labels.csv。真正删除要你自己在系统相册里做。</p>
-    <button class="pill-btn white" data-a="home">回到首页</button></div>`;
+  ${uns.length ? `<div class="card"><div class="card-h" style="margin-bottom:10px"><span>You marked unsure</span><span class="chip">${uns.length}</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px">${uns.map(u=>`<div class="list-row"><img src="${img(u.items[0].id,120)}" alt=""><div><div>${esc(en(u.items[0].reason)||'Test-mode photo')}</div><div class="meta">${u.items[0].date}</div></div></div>`).join('')}</div></div>` : ''}
+  <div class="promo"><small>Don't worry</small><h3>No files were deleted</h3><p>Every swipe only writes to data/labels.csv. To actually delete, use your own Photos app.</p>
+    <button class="pill-btn white" data-a="home">Back to home</button></div>`;
 }
 
 async function render() { $app.innerHTML = ({start:vStart, swipe:vSwipe, done:vDone})[page](); bind(); }
 
 async function begin(m) {
   mode = m; cards = await api('/api/queue?mode='+m); idx = 0; hist = []; keepIdx = null;
-  if (!cards.length) { toast(m==='blind' ? '盲标已全部完成' : '没有需要看的照片了'); return; }
+  if (!cards.length) { toast(m==='blind' ? 'Test mode complete' : 'Nothing left to review'); return; }
   page = 'swipe'; render();
 }
 
@@ -225,8 +238,8 @@ function commit(dir) {
     labels = c.items.map(f=>({id:f.id, action:act}));
     if (act==='delete') { fr = c.items.reduce((s,f)=>s+f.size,0); del = c.items.length; }
   }
-  api('/api/label', {mode, labels}).catch(()=>toast('保存失败，检查终端里的服务是否还在运行'));
-  toast(act==='delete' ? `已标为移到最近删除 · ${fmt(fr)}` : act==='keep' ? '已保留' : '已标为不确定');
+  api('/api/label', {mode, labels}).catch(()=>toast('Save failed — is the server still running in Terminal?'));
+  toast(act==='delete' ? `Marked delete · ${fmt(fr)}` : act==='keep' ? 'Kept' : 'Marked unsure');
   hist.push({idx, act:dir, freed:fr, seen:c.items.length, del, ids:labels.map(l=>l.id)});
   idx++; keepIdx = null; if (idx >= cards.length) page = 'done'; render();
 }
@@ -245,7 +258,7 @@ function bind() {
     if (a==='start-ranked') begin('ranked');
     else if (a==='start-blind') begin('blind');
     else if (a==='left'||a==='right'||a==='up') fly(a);
-    else if (a==='undo') { const h = hist.pop(); if (h) { await api('/api/undo', {mode, labels:h.ids.map(id=>({id}))}); idx = h.idx; keepIdx = null; page='swipe'; toast('已撤销'); render(); } }
+    else if (a==='undo') { const h = hist.pop(); if (h) { await api('/api/undo', {mode, labels:h.ids.map(id=>({id}))}); idx = h.idx; keepIdx = null; page='swipe'; toast('Undone'); render(); } }
     else if (a==='finish') { page='done'; render(); }
     else if (a==='home') { S = await api('/api/summary'); page='start'; render(); }
   });
