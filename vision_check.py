@@ -48,6 +48,8 @@ SYSTEM = (
 
 
 def last_blind():
+    if not (DATA / 'labels.csv').exists():
+        raise SystemExit('no labels yet — run server.py and finish blind labelling (盲标) first')
     last = {}
     for r in csv.DictReader((DATA / 'labels.csv').open()):
         if r['mode'] == 'blind':
