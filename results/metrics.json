@@ -1,0 +1,104 @@
+{
+ "k": 50,
+ "n_gold": 300,
+ "sample_size": 300,
+ "gold_mix": {
+  "delete": 141,
+  "keep": 152,
+  "unsure": 7
+ },
+ "strategies": {
+  "chrono": {
+   "gb_at_k": 0.023445254,
+   "precision_at_k": 0.36,
+   "byte_recall_at_k": 0.0860897084186201,
+   "wrongly_first": 30
+  },
+  "size_only": {
+   "gb_at_k": 0.13470612,
+   "precision_at_k": 0.48,
+   "byte_recall_at_k": 0.49463360870407497,
+   "wrongly_first": 25
+  },
+  "rules_only": {
+   "gb_at_k": 0.011633671,
+   "precision_at_k": 0.32,
+   "byte_recall_at_k": 0.04271821257420186,
+   "wrongly_first": 34
+  },
+  "p_only": {
+   "gb_at_k": 0.022290325,
+   "precision_at_k": 0.2,
+   "byte_recall_at_k": 0.0818488714093811,
+   "wrongly_first": 39
+  },
+  "second_look": {
+   "gb_at_k": 0.094756041,
+   "precision_at_k": 0.26,
+   "byte_recall_at_k": 0.3479390728969202,
+   "wrongly_first": 36
+  },
+  "random_expected": {
+   "gb_at_k": 0.045389192333333335,
+   "precision_at_k": 0.47,
+   "byte_recall_at_k": 0.16666666666666666,
+   "wrongly_first": null
+  }
+ },
+ "confusion": {
+  "keep": {
+   "delete": 67,
+   "keep": 89,
+   "unsure": 3
+  },
+  "delete": {
+   "keep": 56,
+   "unsure": 3,
+   "delete": 71
+  },
+  "unsure": {
+   "unsure": 1,
+   "keep": 7,
+   "delete": 3
+  }
+ },
+ "precision_of_system_delete": 0.5461538461538461,
+ "silent_failures": 56,
+ "abstention_rate": 0.03666666666666667,
+ "unsure_outcomes": {
+  "unsure": 1,
+  "keep": 7,
+  "delete": 3
+ },
+ "by_type": {
+  "burst": {
+   "n": 33,
+   "i_deleted": 6,
+   "system_said_delete": 19,
+   "precision_of_delete": 0.21052631578947367
+  },
+  "photo": {
+   "n": 185,
+   "i_deleted": 72,
+   "system_said_delete": 40,
+   "precision_of_delete": 0.175
+  },
+  "screenshot": {
+   "n": 71,
+   "i_deleted": 60,
+   "system_said_delete": 71,
+   "precision_of_delete": 0.8450704225352113
+  },
+  "video": {
+   "n": 11,
+   "i_deleted": 3,
+   "system_said_delete": 0,
+   "precision_of_delete": null
+  }
+ },
+ "ranked_session": {
+  "seen": 260,
+  "gb_freed": 0.589146655,
+  "gb_per_50": 0.11329743365384615
+ }
+}

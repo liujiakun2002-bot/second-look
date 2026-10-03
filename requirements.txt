@@ -1,0 +1,4 @@
+pillow>=10
+numpy>=1.24
+opencv-python-headless>=4.8,<5  # optional: face detection + video thumbnails
+pillow-heif>=0.16             # optional: iPhone HEIC photos

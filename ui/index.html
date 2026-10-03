@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Second Look</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* Visual design: Liu Jiakun's prototype (sage ground, white cards, black pills, one lime highlight). Kept verbatim; only data wiring changed. */
+:root {
+  --ground: #DCE3DF; --ground-2: #C9D3CE; --card: #F8F9F7; --ink: #141615; --muted: #7C8580; --pill: #E6EAE7;
+  --lime: #E4EF8C; --sage: #CFDDD2; --keep: #2E7D4F; --del: #C2452B; --on-ink: #FFFFFF; --hatch: rgba(20,22,21,.28);
+  --shadow: 0 10px 30px rgba(40,60,50,.12);
+  --f: "Manrope", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #121614; --ground-2: #1B211E; --card: #1E2421; --ink: #EEF2EF; --muted: #8E9993; --pill: #2A322E;
+  --lime: #D7E46E; --sage: #2F4136; --keep: #7FD3A0; --del: #F29A85; --on-ink: #141615; --hatch: rgba(238,242,239,.25);
+  --shadow: 0 10px 30px rgba(0,0,0,.35); color-scheme: dark; } }
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body { margin: 0; font-family: var(--f); color: var(--ink);
+  background: radial-gradient(120% 80% at 20% 0%, var(--ground) 0%, var(--ground-2) 100%) fixed, var(--ground);
+  padding: 20px 16px; -webkit-font-smoothing: antialiased; }
+.app { max-width: 400px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; min-height: calc(100vh - 40px); }
+.num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.card { background: var(--card); border-radius: 26px; padding: 16px 18px; box-shadow: var(--shadow); }
+.card-h { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; }
+.circ { width: 32px; height: 32px; border-radius: 50%; background: var(--pill); display: grid; place-items: center; border: none; color: var(--ink); cursor: pointer; flex: none; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--pill); color: var(--ink); }
+.chip.lime { background: var(--lime); color: #141615; } .chip.sage { background: var(--sage); }
+.chip.dark { background: var(--ink); color: var(--on-ink); }
+.chip.del { background: color-mix(in srgb, var(--del) 16%, transparent); color: var(--del); }
+.chip.keep { background: color-mix(in srgb, var(--keep) 18%, transparent); color: var(--keep); }
+button { font-family: inherit; } button:focus-visible { outline: 3px solid var(--keep); outline-offset: 2px; }
+.pill-btn { border: none; border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer; background: var(--ink); color: var(--on-ink); }
+.pill-btn.white { background: #fff; color: #141615; }
+.top { display: flex; justify-content: space-between; align-items: flex-end; padding: 4px 4px 0; }
+.hello small { display: block; font-size: 12px; color: var(--muted); } .hello b { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+.stat-big { font-size: 34px; font-weight: 600; margin: 6px 0 2px; } .stat-big small { font-size: 16px; font-weight: 500; margin-left: 2px; }
+.where { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.where-row { display: flex; align-items: center; gap: 10px; font-size: 13px; } .where-row .track { flex: 1; }
+.where-row .fill { height: 32px; border-radius: 999px; display: flex; align-items: center; padding: 0 14px; font-weight: 500; white-space: nowrap; min-width: max-content; }
+.where-row .v { width: 72px; text-align: right; font-weight: 600; font-size: 13px; }
+.promo { background: #141615; color: #fff; border-radius: 26px; padding: 18px; position: relative; overflow: hidden; box-shadow: var(--shadow); }
+.promo::after { content: ""; position: absolute; right: -10px; bottom: -10px; width: 120px; height: 90px; background-image: radial-gradient(rgba(255,255,255,.28) 1.2px, transparent 1.4px); background-size: 9px 9px; }
+.promo small { color: rgba(255,255,255,.55); font-size: 11px; } .promo h3 { font-size: 21px; line-height: 1.3; margin: 6px 0 14px; font-weight: 600; max-width: 14em; }
+.promo p { font-size: 12px; color: rgba(255,255,255,.7); margin: -6px 0 14px; max-width: 22em; } .promo .pill-btn { position: relative; z-index: 1; }
+.promo.light { background: var(--card); color: var(--ink); } .promo.light small, .promo.light p { color: var(--muted); } .promo.light::after { display: none; }
+.hud { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
+.hud .card { padding: 14px 16px; border-radius: 22px; } .hud .k { font-size: 12px; color: var(--muted); font-weight: 500; }
+.hud .v { font-size: 26px; font-weight: 700; margin-top: 2px; } .hud .v small { font-size: 13px; font-weight: 500; }
+.hud .lime-card { background: var(--lime); color: #141615; } .hud .lime-card .k { color: rgba(20,22,21,.6); }
+.dots { display: flex; gap: 3px; margin-top: 8px; } .dots i { height: 4px; flex: 1; border-radius: 4px; background: rgba(20,22,21,.15); } .dots i.done { background: #141615; }
+.stack { position: relative; height: 470px; touch-action: pan-y; }
+.sw { position: absolute; inset: 0; background: var(--card); border-radius: 30px; box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 10px; user-select: none; -webkit-user-select: none; will-change: transform; }
+.sw.back { transform: translateY(14px) scale(.95); opacity: .7; } .sw.back2 { transform: translateY(26px) scale(.9); opacity: .4; }
+.sw.front { cursor: grab; z-index: 3; } .sw.front.dragging { cursor: grabbing; }
+.sw.fly { transition: transform .32s ease-in, opacity .32s; } .sw.snap { transition: transform .25s cubic-bezier(.2,.9,.3,1.3); }
+.sw .ph { position: relative; flex: 1; border-radius: 22px; overflow: hidden; background: var(--pill); min-height: 0; }
+.sw .ph img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.sw .ph video { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
+.sw .ph .size { position: absolute; left: 10px; top: 10px; } .sw .ph .top-r { position: absolute; right: 10px; top: 10px; }
+.sw .info { padding: 2px 6px 4px; } .sw .reason { font-size: 17px; font-weight: 600; line-height: 1.35; margin: 6px 0 2px; text-wrap: balance; }
+.sw .meta { font-size: 12px; color: var(--muted); }
+.stamp { position: absolute; top: 26px; padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: 15px; opacity: 0; pointer-events: none; z-index: 4; }
+.stamp.l { right: 20px; background: var(--del); color: #fff; transform: rotate(8deg); } .stamp.r { left: 20px; background: var(--keep); color: #fff; transform: rotate(-8deg); }
+.stamp.u { left: 50%; transform: translateX(-50%); top: auto; bottom: 150px; background: var(--lime); color: #141615; }
+.unsure-band { background: var(--lime); color: #141615; border-radius: 16px; padding: 8px 12px; font-size: 12px; } .unsure-band b { font-size: 14px; display: block; }
+.blind-band { background: var(--pill); border-radius: 16px; padding: 8px 12px; font-size: 12px; color: var(--muted); }
+.burst { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex: 1; align-content: center; overflow: auto; }
+.bc { border: none; padding: 0; background: none; cursor: pointer; position: relative; border-radius: 14px; }
+.bc img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 14px; display: block; opacity: .45; outline: 3px solid transparent; outline-offset: -3px; }
+.bc.keep img { opacity: 1; outline-color: var(--keep); }
+.bc span { position: absolute; left: 5px; bottom: 5px; font-size: 10px; font-weight: 700; background: rgba(255,255,255,.9); color: #141615; border-radius: 999px; padding: 1px 6px; }
+.bc.keep span { background: var(--keep); color: #fff; } .burst-note { font-size: 11px; color: var(--muted); padding: 0 4px; }
+.actions { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: start; }
+.act { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: var(--ink); font-size: 12px; font-weight: 600; }
+.act .o { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; box-shadow: var(--shadow); transition: transform .12s; }
+.act:active .o { transform: scale(.92); } .act.del .o { background: var(--card); color: var(--del); }
+.act.uns .o { width: 46px; height: 46px; margin-top: 7px; background: var(--lime); color: #141615; }
+.act.keep .o { background: var(--ink); color: var(--on-ink); } .act.rec.del .o { background: var(--del); color: #fff; }
+.act svg { width: 22px; height: 22px; } .act small { font-weight: 500; color: var(--muted); font-size: 11px; margin-top: -4px; }
+.sub-actions { display: flex; justify-content: space-between; padding: 0 6px; }
+.link { background: none; border: none; font-size: 12px; color: var(--muted); cursor: pointer; padding: 6px 2px; } .link:hover { color: var(--ink); } .link:disabled { opacity: .35; cursor: default; }
+.rings { position: relative; height: 190px; display: grid; place-items: center; margin-top: 6px; }
+.rings i { position: absolute; border-radius: 50%; background: var(--sage); opacity: .45; }
+.rings b { position: relative; font-size: 44px; font-weight: 700; } .rings b small { font-size: 18px; font-weight: 600; }
+.list-row { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 18px; background: var(--pill); font-size: 13px; }
+.list-row img { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; flex: none; } .list-row .meta { font-size: 11px; color: var(--muted); }
+.toast { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: #141615; color: #fff; font-size: 13px; padding: 9px 16px; border-radius: 999px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 10; white-space: nowrap; }
+.toast.on { opacity: 1; }
+.foot { font-size: 11px; color: var(--muted); text-align: center; margin-top: auto; padding-top: 8px; }
+@media (prefers-reduced-motion: reduce) { .sw.fly, .sw.snap { transition: none; } }
+</style></head><body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+const IC = {
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.5s-7.5-4.6-7.5-10.3A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.6c0 5.7-7.5 10.3-7.5 10.3z"/></svg>',
+  q: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9.2 9a2.9 2.9 0 1 1 3.8 2.8c-.6.2-1 .8-1 1.5V14M12 18h.01"/></svg>',
+};
+const fmt = b => b >= 1e9 ? (b/1e9).toFixed(2)+' GB' : b >= 1e7 ? Math.round(b/1e6)+' MB' : (b/1e6).toFixed(1)+' MB';
+const gb = b => (b/1e9).toFixed(2);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const api = (p, body) => fetch(p, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : {}).then(r=>r.json());
+
+let S = null, mode = 'ranked', page = 'start', cards = [], idx = 0, hist = [], keepIdx = null;
+const freed = () => hist.reduce((s,h)=>s+h.freed,0);
+const seen = () => hist.reduce((s,h)=>s+h.seen,0);
+const $app = document.getElementById('app');
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),1500); }
+
+// ─── 页面 1：开始 ───
+function vStart() {
+  const r = S.reclaim, rows = [['大视频', r.video, 'var(--sage)'], ['重复/相似照片', r.burst, 'var(--pill)'], ['截图', r.screenshot, 'var(--lime)'], ['模糊/误拍', r.photo, 'var(--pill)']].filter(x=>x[1]>0);
+  const max = Math.max(1, ...rows.map(x=>x[1])), est = rows.reduce((s,x)=>s+x[1],0);
+  return `
+  <div class="top"><div class="hello"><small>Second Look</small><b>存储快满了</b></div></div>
+  <div class="card">
+    <div class="card-h"><span>这个相册</span></div>
+    <div class="stat-big num">${S.count.toLocaleString()}<small>项</small></div>
+    <span class="chip">${S.photos} 张照片 · ${S.videos} 个视频 · 共 ${fmt(S.bytes)}</span>
+  </div>
+  <div class="card">
+    <div class="card-h"><span>空间可能从哪里腾出</span><span class="chip lime">≈ ${fmt(est)}</span></div>
+    <div class="where">${rows.map(([k,b,c])=>`<div class="where-row"><div class="track"><div class="fill" style="width:${Math.max(38,b/max*100)}%;background:${c}">${k}</div></div><div class="v num">${fmt(b)}</div></div>`).join('')}</div>
+  </div>
+  <div class="promo">
+    <small>按「最值得删 × 最占空间」排好了</small>
+    <h3>先看最值得看的几张</h3>
+    <p>左滑移到最近删除，右滑保留，上滑不确定。不会自动删除任何照片。</p>
+    <button class="pill-btn white" data-a="start-ranked">开始整理</button>
+  </div>
+  <div class="promo light">
+    <small>评估用 · 标准答案 ${S.blind_done} / ${S.blind_total}</small>
+    <h3>盲标：随机照片，不看系统建议</h3>
+    <p>这些标签用来检验排序有没有漏掉该删的照片，所以这里不显示任何推荐。</p>
+    <button class="pill-btn" data-a="start-blind">${S.blind_done ? '继续盲标' : '开始盲标'}</button>
+  </div>
+  <div class="foot">只在你的电脑上运行 · 滑动只记录标签，不删除文件</div>`;
+}
+
+// ─── 页面 2：滑动 ───
+const img = (id, w) => `/img/${id}?w=${w}`;
+function cardHTML(c, cls) {
+  const blind = mode === 'blind';
+  const stamps = '<div class="stamp l">移到最近删除</div><div class="stamp r">保留</div><div class="stamp u">不确定</div>';
+  if (c.card === 'burst') {
+    const best = Math.max(0, c.items.findIndex(f=>f.best)), k = cls==='front' ? keepIdx : best;
+    const fr = c.items.filter((_,i)=>i!==k).reduce((s,f)=>s+f.size,0);
+    return `<div class="sw ${cls}">
+      <div class="info" style="padding-top:4px"><div style="display:flex;gap:6px"><span class="chip del">建议删除 ${c.items.length-1} 张</span><span class="chip num">${fmt(fr)}</span></div>
+      <div class="reason">${c.items.length} 张相似照片，★ 是最清晰的一张</div><div class="meta">${c.items[0].date}</div></div>
+      <div class="burst">${c.items.map((f,i)=>`<button class="bc ${i===k?'keep':''}" data-pick="${i}" aria-label="第 ${i+1} 张"><img src="${img(f.id,300)}" alt="" draggable="false"><span>${i===k?'保留':(i+1)}${i===best?' ★':''}</span></button>`).join('')}</div>
+      <div class="burst-note">点一张改成保留它 · 左滑：保留 1 张，其余移到最近删除 · 右滑：全部保留</div>${stamps}</div>`;
+  }
+  const it = c.items[0];
+  const chip = blind ? '' : it.status==='delete' ? '<span class="chip del size">建议删除</span>' : it.status==='unsure' ? '<span class="chip lime size">不确定</span>' : '<span class="chip keep size">建议保留</span>';
+  const band = blind ? '<div class="blind-band">盲标模式 · 不显示系统建议，凭你自己的判断</div>'
+             : it.status==='unsure' ? '<div class="unsure-band"><b>不确定，请你看看</b>系统没有把握，这张不算推荐</div>' : '';
+  return `<div class="sw ${cls}">${band}
+    <div class="ph">${it.kind==='video' && cls==='front'
+      ? `<video src="/video/${it.id}" poster="${img(it.id,700)}" controls playsinline preload="metadata"></video>`
+      : `<img src="${img(it.id,700)}" alt="" draggable="false">`}${chip}<span class="chip dark top-r num">${fmt(it.size)}</span></div>
+    <div class="info">${blind ? '' : `<div class="reason">${esc(it.reason)}</div>`}<div class="meta">${it.date} · ${it.kind==='video'?'视频':'照片'}</div></div>${stamps}</div>`;
+}
+
+function vSwipe() {
+  const c = cards[idx];
+  if (c.card==='burst' && keepIdx===null) keepIdx = Math.max(0, c.items.findIndex(f=>f.best));
+  const back = [cards[idx+2], cards[idx+1]].map((x,i)=> x ? cardHTML(x, i===0?'back2':'back') : '').join('');
+  const recDel = mode==='ranked' && (c.card==='burst' || c.items[0].status==='delete');
+  const segs = 20, done = Math.round(idx / cards.length * segs);
+  const left = mode==='blind'
+    ? `<div class="card lime-card"><div class="k">盲标进度</div><div class="v num">${S.blind_done + seen()}<small> / ${S.blind_total}</small></div><div class="dots">${Array.from({length:segs},(_,i)=>`<i class="${i<done?'done':''}"></i>`).join('')}</div></div>`
+    : `<div class="card lime-card"><div class="k">已腾出</div><div class="v num">${gb(freed())}<small> GB</small></div><div class="dots">${Array.from({length:segs},(_,i)=>`<i class="${i<done?'done':''}"></i>`).join('')}</div></div>`;
+  return `
+  <div class="hud">${left}
+    <div class="card"><div class="k">已看</div><div class="v num">${seen()}<small> 张</small></div><div class="k num" style="margin-top:6px">第 ${idx+1} / ${cards.length} 组</div></div>
+  </div>
+  <div class="stack" id="stack">${back}${cardHTML(c,'front')}</div>
+  <div class="actions">
+    <button class="act del ${recDel?'rec':''}" data-a="left"><span class="o">${IC.x}</span>移到最近删除<small>← 左滑</small></button>
+    <button class="act uns" data-a="up"><span class="o">${IC.q}</span>不确定<small>↑ 上滑</small></button>
+    <button class="act keep" data-a="right"><span class="o">${IC.heart}</span>保留<small>右滑 →</small></button>
+  </div>
+  <div class="sub-actions"><button class="link" data-a="undo" ${hist.length?'':'disabled'}>↩ 撤销上一步</button><button class="link" data-a="finish">结束，看结果 →</button></div>`;
+}
+
+// ─── 页面 3：结果 ───
+function vDone() {
+  const s = seen(), d = hist.reduce((a,h)=>a+h.del,0);
+  const uns = hist.filter(h=>h.act==='up').map(h=>cards[h.idx]).slice(0,8);
+  const per = s ? freed()/s*50 : 0;
+  return `
+  <div class="top"><div class="hello"><small>${mode==='blind'?'盲标暂停':'本次整理完成'}</small><b>${mode==='blind'?'标签已保存':'腾出了空间'}</b></div></div>
+  <div class="card"><div class="card-h"><span>${mode==='blind'?'标为删除的大小':'本次腾出'}</span><span class="chip lime num">${s} 张看完</span></div>
+    <div class="rings"><i style="width:180px;height:180px"></i><i style="width:130px;height:130px"></i><i style="width:84px;height:84px;opacity:.8"></i>
+      <b class="num">${gb(freed())}<small> GB</small></b></div></div>
+  <div class="hud">
+    <div class="card"><div class="k">移到最近删除</div><div class="v num">${d}<small> 张</small></div></div>
+    <div class="card"><div class="k">每看 50 张</div><div class="v num">${gb(per)}<small> GB</small></div>${s<50?'<div class="k">看得还少，仅供参考</div>':''}</div>
+  </div>
+  ${uns.length ? `<div class="card"><div class="card-h" style="margin-bottom:10px"><span>你标了「不确定」的</span><span class="chip">${uns.length}</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px">${uns.map(u=>`<div class="list-row"><img src="${img(u.items[0].id,120)}" alt=""><div><div>${esc(u.items[0].reason||'盲标照片')}</div><div class="meta">${u.items[0].date}</div></div></div>`).join('')}</div></div>` : ''}
+  <div class="promo"><small>放心</small><h3>没有任何文件被删除</h3><p>每一次滑动都只写进 data/labels.csv。真正删除要你自己在系统相册里做。</p>
+    <button class="pill-btn white" data-a="home">回到首页</button></div>`;
+}
+
+async function render() { $app.innerHTML = ({start:vStart, swipe:vSwipe, done:vDone})[page](); bind(); }
+
+async function begin(m) {
+  mode = m; cards = await api('/api/queue?mode='+m); idx = 0; hist = []; keepIdx = null;
+  if (!cards.length) { toast(m==='blind' ? '盲标已全部完成' : '没有需要看的照片了'); return; }
+  page = 'swipe'; render();
+}
+
+function commit(dir) {
+  const c = cards[idx]; let fr = 0, del = 0, labels;
+  const act = dir==='left' ? 'delete' : dir==='right' ? 'keep' : 'unsure';
+  if (c.card==='burst' && dir==='left') {
+    labels = c.items.map((f,i)=>({id:f.id, action: i===keepIdx ? 'keep' : 'delete'}));
+    const ds = c.items.filter((_,i)=>i!==keepIdx); fr = ds.reduce((s,f)=>s+f.size,0); del = ds.length;
+  } else {
+    labels = c.items.map(f=>({id:f.id, action:act}));
+    if (act==='delete') { fr = c.items.reduce((s,f)=>s+f.size,0); del = c.items.length; }
+  }
+  api('/api/label', {mode, labels}).catch(()=>toast('保存失败，检查终端里的服务是否还在运行'));
+  toast(act==='delete' ? `已标为移到最近删除 · ${fmt(fr)}` : act==='keep' ? '已保留' : '已标为不确定');
+  hist.push({idx, act:dir, freed:fr, seen:c.items.length, del, ids:labels.map(l=>l.id)});
+  idx++; keepIdx = null; if (idx >= cards.length) page = 'done'; render();
+}
+
+function fly(dir) {
+  const card = document.querySelector('.sw.front'); if (!card || card._busy) return; card._busy = true;
+  const tx = dir==='left' ? -520 : dir==='right' ? 520 : 0, ty = dir==='up' ? -640 : 40, r = dir==='left' ? -18 : dir==='right' ? 18 : 0;
+  card.querySelector(dir==='left'?'.stamp.l':dir==='right'?'.stamp.r':'.stamp.u').style.opacity = 1;
+  card.classList.add('fly'); card.style.transform = `translate(${tx}px,${ty}px) rotate(${r}deg)`; card.style.opacity = 0;
+  setTimeout(()=>commit(dir), 280);
+}
+
+function bind() {
+  $app.querySelectorAll('[data-a]').forEach(b => b.onclick = async () => {
+    const a = b.dataset.a;
+    if (a==='start-ranked') begin('ranked');
+    else if (a==='start-blind') begin('blind');
+    else if (a==='left'||a==='right'||a==='up') fly(a);
+    else if (a==='undo') { const h = hist.pop(); if (h) { await api('/api/undo', {mode, labels:h.ids.map(id=>({id}))}); idx = h.idx; keepIdx = null; page='swipe'; toast('已撤销'); render(); } }
+    else if (a==='finish') { page='done'; render(); }
+    else if (a==='home') { S = await api('/api/summary'); page='start'; render(); }
+  });
+  const card = document.querySelector('.sw.front'); if (card) drag(card);
+}
+
+function drag(card) {
+  let sx=0, sy=0, dx=0, dy=0, down=false, moved=false, pickEl=null;
+  const L = card.querySelector('.stamp.l'), R = card.querySelector('.stamp.r'), U = card.querySelector('.stamp.u');
+  card.addEventListener('pointerdown', e => { if (e.target.closest('video')) return; down=true; moved=false; sx=e.clientX; sy=e.clientY; dx=dy=0; pickEl = e.target.closest('[data-pick]'); card.setPointerCapture(e.pointerId); card.classList.remove('snap'); card.classList.add('dragging'); });
+  card.addEventListener('pointermove', e => { if(!down) return; dx=e.clientX-sx; dy=e.clientY-sy; if (Math.abs(dx)+Math.abs(dy) > 6) moved = true; if(!moved) return;
+    card.style.transform = `translate(${dx}px,${dy*0.6}px) rotate(${dx/18}deg)`;
+    L.style.opacity = Math.max(0, Math.min(1, -dx/110)); R.style.opacity = Math.max(0, Math.min(1, dx/110)); U.style.opacity = Math.abs(dx) < 60 ? Math.max(0, Math.min(1, -dy/120)) : 0; });
+  const end = () => { if(!down) return; down=false; card.classList.remove('dragging');
+    if (!moved) { if (pickEl) { keepIdx = +pickEl.dataset.pick; render(); } return; }
+    if (dx < -110) fly('left'); else if (dx > 110) fly('right'); else if (dy < -120 && Math.abs(dx) < 60) fly('up');
+    else { card.classList.add('snap'); card.style.transform=''; L.style.opacity=R.style.opacity=U.style.opacity=0; } };
+  card.addEventListener('pointerup', end); card.addEventListener('pointercancel', end);
+}
+
+document.addEventListener('keydown', e => { if (page!=='swipe') return;
+  if (e.key==='ArrowLeft') { e.preventDefault(); fly('left'); } else if (e.key==='ArrowRight') { e.preventDefault(); fly('right'); } else if (e.key==='ArrowUp') { e.preventDefault(); fly('up'); } });
+
+api('/api/summary').then(s => { S = s; render(); });
+</script>
+</body></html>
